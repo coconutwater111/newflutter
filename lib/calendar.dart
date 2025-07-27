@@ -29,7 +29,6 @@ class _CalendarScreenState extends State<CalendarScreen> {
                 _selectedDay = selectedDay;
                 _focusedDay = focusedDay;
               });
-              print("選擇了日期：$selectedDay");
             },
           ),
           const SizedBox(height: 20),
@@ -46,7 +45,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => const MyHomePage(), // 跳轉到輸入畫面
+                        builder: (context) => MyHomePage(selectedDay: _selectedDay), // 跳轉到輸入畫面
                       ),
                     );
                   },

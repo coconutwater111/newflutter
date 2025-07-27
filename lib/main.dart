@@ -26,7 +26,8 @@ class MyApp extends StatelessWidget {
 }
 
 class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key});
+  final DateTime? selectedDay;// 接收從 CalendarScreen 傳來的 selectedDay
+  const MyHomePage({super.key, this.selectedDay});
 
   @override
   State<MyHomePage> createState() => _MyHomePageState();
@@ -91,7 +92,7 @@ class _MyHomePageState extends State<MyHomePage> {
         padding: const EdgeInsets.all(20.0),
         child: Column(
           children: [
-            InputSection(onSubmit: _sendToBackend),
+            InputSection(onSubmit: _sendToBackend, selectedDay: widget.selectedDay ?? DateTime.now()),
             const SizedBox(height: 20),
             if (isReconnecting)
               Text(

@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 
 class InputSection extends StatefulWidget {
   final void Function(Map<String, dynamic>) onSubmit;
-
-  const InputSection({super.key, required this.onSubmit});
+  final DateTime selectedDay;
+  const InputSection({super.key, required this.onSubmit, required this.selectedDay});
 
   @override
   State<InputSection> createState() => _InputSectionState();
@@ -54,6 +54,7 @@ class _InputSectionState extends State<InputSection> {
         '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}';
 
     final data = {
+      "taskDate": widget.selectedDay.toIso8601String().split("T")[0],
       "Ts": formatTime(_ts!),
       "Te": formatTime(_te!),
       "n": n,
