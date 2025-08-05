@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:table_calendar/table_calendar.dart';
-import 'main.dart'; // 匯入你要跳轉到的頁面 MyHomePage
+import '../main.dart'; // 匯入你要跳轉到的頁面 MyHomePage
+import 'custom_bottom_app_bar.dart'; // 匯入自定義的底部應用欄
 
 class CalendarScreen extends StatefulWidget {
   const CalendarScreen({super.key});
@@ -40,20 +41,31 @@ class _CalendarScreenState extends State<CalendarScreen> {
                   style: const TextStyle(fontSize: 16),
                 ),
                 const SizedBox(height: 10),
-                ElevatedButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => MyHomePage(selectedDay: _selectedDay), // 跳轉到輸入畫面
-                      ),
-                    );
-                  },
-                  child: const Text('新增資料'),
-                ),
               ],
             ),
         ],
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: _selectedDay == null
+            ? null
+            : () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => MyHomePage(
+                      selectedDay: _selectedDay,
+                    ),
+                  ),
+                );
+              },
+        tooltip: '新增',
+        child: const Icon(Icons.add),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.endDocked,
+      bottomNavigationBar: const CustomBottomAppBar(
+        color: Colors.transparent,
+        fabLocation: FloatingActionButtonLocation.endDocked,
+        shape: CircularNotchedRectangle(),
       ),
     );
   }

@@ -4,7 +4,8 @@ import 'dart:convert';
 import 'dart:developer';
 
 import 'widget.dart';
-import 'calendar.dart';
+import 'home_screen/calendar.dart';
+import 'home_screen/custom_bottom_app_bar.dart';
 
 void main() {
   runApp(const MyApp());
@@ -39,7 +40,7 @@ class _MyHomePageState extends State<MyHomePage> {
   String responseMsg = '';
 
   Future<void> _sendToBackend(Map<String, dynamic> data) async {
-    final url = Uri.parse('https://3e366625823e.ngrok-free.app/api/submit');
+    final url = Uri.parse('https://941009b92a2b.ngrok-free.app/api/submit');
     int maxRetries = 3;
 
     for (int attempt = 1; attempt <= maxRetries; attempt++) {
@@ -90,23 +91,33 @@ class _MyHomePageState extends State<MyHomePage> {
       appBar: AppBar(title: const Text("Input your data:")),
       body: Padding(
         padding: const EdgeInsets.all(20.0),
-        child: Column(
-          children: [
-            InputSection(onSubmit: _sendToBackend, selectedDay: widget.selectedDay ?? DateTime.now()),
-            const SizedBox(height: 20),
-            if (isReconnecting)
-              Text(
-                "🔄 正在重新連接... 第 $retryCount 次",
-                style: const TextStyle(color: Colors.orange, fontSize: 16),
+        child: SingleChildScrollView( // ← 建議加這行避免內容超出
+          child: Column(
+            children: [
+              InputSection(
+                onSubmit: _sendToBackend,
+                selectedDay: widget.selectedDay ?? DateTime.now(),
               ),
-            const SizedBox(height: 10),
-            if (responseMsg.isNotEmpty)
-              Text(
-                responseMsg,
-                style: const TextStyle(color: Colors.blue, fontSize: 14),
-              ),
-          ],
+              const SizedBox(height: 20),
+              if (isReconnecting)
+                Text(
+                  "🔄 正在重新連接... 第 $retryCount 次",
+                  style: const TextStyle(color: Colors.orange, fontSize: 16),
+                ),
+              const SizedBox(height: 10),
+              if (responseMsg.isNotEmpty)
+                Text(
+                  responseMsg,
+                  style: const TextStyle(color: Colors.blue, fontSize: 14),
+                ),
+            ],
+          ),
         ),
+      ),
+      bottomNavigationBar: const CustomBottomAppBar(
+        color: Colors.transparent,
+        fabLocation: FloatingActionButtonLocation.endDocked,
+        shape: CircularNotchedRectangle(),
       ),
     );
   }
