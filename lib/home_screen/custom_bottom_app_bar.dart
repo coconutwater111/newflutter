@@ -86,7 +86,7 @@ class CustomBottomAppBar extends StatelessWidget {
                 );
               },
             ),
-            if (centerLocations.contains(fabLocation)) const Spacer(),
+            /*if (centerLocations.contains(fabLocation)) const Spacer(),
             IconButton(
               tooltip: 'Search',
               icon: const Icon(Icons.search),
@@ -96,7 +96,7 @@ class CustomBottomAppBar extends StatelessWidget {
               tooltip: 'Favorite',
               icon: const Icon(Icons.favorite),
               onPressed: () {},
-            ),
+            ),*/
           ],
         ),
       ),
