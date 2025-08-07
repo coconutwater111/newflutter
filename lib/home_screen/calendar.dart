@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:table_calendar/table_calendar.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../main.dart'; // 匯入你要跳轉到的頁面 MyHomePage
 import 'custom_bottom_app_bar.dart'; // 匯入自定義的底部應用欄
 
@@ -13,6 +14,7 @@ class CalendarScreen extends StatefulWidget {
 class _CalendarScreenState extends State<CalendarScreen> {
   DateTime _focusedDay = DateTime.now();
   DateTime? _selectedDay;
+  List<Map<String, dynamic>> scheduleList = []; // 新增這行
 
   // 假設行程資料格式如下
   final Map<String, List<Map<String, String>>> _scheduleData = {
@@ -29,11 +31,30 @@ class _CalendarScreenState extends State<CalendarScreen> {
       '${date.month.toString().padLeft(2, '0')}-'
       '${date.day.toString().padLeft(2, '0')}';
 
+  // 取得某一天的行程
+  Future<List<Map<String, dynamic>>> fetchSchedules(String dateKey) async {
+    final snapshot = await FirebaseFirestore.instance
+        .collection('schedules')
+        .where('date', isEqualTo: dateKey)
+        .get();
+
+    return snapshot.docs.map((doc) => doc.data()).toList();
+  }
+
+  Future<void> _loadSchedules() async {
+    final dateKey = _dateToKey(_selectedDay!);
+    final list = await fetchSchedules(dateKey);
+    setState(() {
+      scheduleList = list; // 現在這行不會報錯了
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final selectedDateStr =
         _selectedDay == null ? '' : _dateToKey(_selectedDay!.toLocal());
-    final scheduleList = _scheduleData[selectedDateStr] ?? [];
+    // 你可以選擇使用 Firebase 資料或本地資料
+    final displayList = scheduleList.isNotEmpty ? scheduleList : (_scheduleData[selectedDateStr] ?? []);
 
     return Scaffold(
       appBar: AppBar(title: const Text('行事曆')),
@@ -49,6 +70,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                 _selectedDay = selectedDay;
                 _focusedDay = focusedDay;
               });
+              _loadSchedules(); // 選擇日期時自動載入資料
             },
           ),
           const SizedBox(height: 20),
@@ -64,8 +86,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
                 ),
                 const SizedBox(height: 10),*/
                 // 新增：行程詳細內容
-                if (scheduleList.isNotEmpty)
-                  ...scheduleList.map(
+                if (displayList.isNotEmpty)
+                  ...displayList.map(
                     (item) => Card(
                       margin: const EdgeInsets.symmetric(
                         vertical: 4,
@@ -77,7 +99,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                       ),
                     ),
                   ),
-                if (scheduleList.isEmpty)
+                if (displayList.isEmpty)
                   const Padding(
                     padding: EdgeInsets.symmetric(vertical: 8),
                     child: Text('此天尚無行程', style: TextStyle(color: Colors.grey)),

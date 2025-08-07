@@ -2,12 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'dart:developer';
+// import 'package:firebase_core/firebase_core.dart'; // 暫時註解
 
 import 'widget.dart';
 import 'home_screen/calendar.dart';
 import 'home_screen/custom_bottom_app_bar.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  // await Firebase.initializeApp(); // 暫時註解
   runApp(const MyApp());
 }
 
@@ -88,7 +91,7 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Input your data:")),
+      appBar: AppBar(title: const Text("輸入行程")),
       body: Padding(
         padding: const EdgeInsets.all(20.0),
         child: SingleChildScrollView( // ← 建議加這行避免內容超出
