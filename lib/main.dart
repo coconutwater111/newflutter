@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'dart:developer';
+import 'dart:developer' as developer;
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
@@ -13,14 +13,17 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
   try {
-    print("🚀 開始初始化 Firebase...");
+    developer.log("🚀 開始初始化 Firebase...", name: 'Firebase');
     await Firebase.initializeApp();
-    print("✅ Firebase 初始化成功！");
+    developer.log("✅ Firebase 初始化成功！", name: 'Firebase');
     runApp(const MyApp());
   } catch (e, stackTrace) {
-    print("❌ Firebase 初始化失敗:");
-    print("錯誤: $e");
-    print("堆疊追蹤: $stackTrace");
+    developer.log(
+      "❌ Firebase 初始化失敗",
+      name: 'Firebase',
+      error: e,
+      stackTrace: stackTrace,
+    );
     
     // 執行沒有 Firebase 的版本
     runApp(MyAppWithoutFirebase(error: e.toString()));
@@ -132,20 +135,20 @@ class _MyHomePageState extends State<MyHomePage> {
         );
 
         if (response.statusCode == 200) {
-          log("成功送出：${response.body}");
+          developer.log("成功送出：${response.body}");
           setState(() {
             isReconnecting = false;
             responseMsg = '✅ 成功送出：${response.body}';
           });
           return;
         } else {
-          log("錯誤：狀態碼 ${response.statusCode}");
+          developer.log("錯誤：狀態碼 ${response.statusCode}");
           setState(() {
             responseMsg = '❌ 錯誤：狀態碼 ${response.statusCode}';
           });
         }
       } catch (e) {
-        log("連線失敗：$e");
+        developer.log("連線失敗：$e");
         setState(() {
           responseMsg = "⚠️ 第 $attempt 次連線失敗：$e";
         });
