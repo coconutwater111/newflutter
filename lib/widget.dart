@@ -9,7 +9,6 @@ class InputSection extends StatefulWidget {
     required this.selectedDay,
   });
 
-
   @override
   State<InputSection> createState() => _InputSectionState();
 }

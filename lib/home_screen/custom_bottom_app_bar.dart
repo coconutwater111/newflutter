@@ -21,10 +21,12 @@ class CustomBottomAppBar extends StatelessWidget {
   Widget build(BuildContext context) {
     return BottomAppBar(
       shape: shape,
-      color: color, // 使用傳入的顏色
+      // color: Colors.blue.shade50,        // ✅ 如果有背景色，統一使用系統色
+      elevation: 8,
       child: IconTheme(
         data: IconThemeData(color: Colors.black), // 使用傳入顏色的黑色版本
         child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: <Widget>[
             IconButton(
               tooltip: 'Open navigation menu',
@@ -97,6 +99,15 @@ class CustomBottomAppBar extends StatelessWidget {
               icon: const Icon(Icons.favorite),
               onPressed: () {},
             ),*/
+            IconButton(
+              icon: Icon(
+                Icons.calendar_today,
+                color: Colors.blue.shade600,   // ✅ 統一圖標顏色
+              ),
+              onPressed: () {
+                // 導航邏輯
+              },
+            ),
           ],
         ),
       ),

@@ -8,6 +8,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'widget.dart';
 import 'home_screen/calendar.dart';
 import 'home_screen/custom_bottom_app_bar.dart';
+import 'daily_schedule/daily_schedule_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -186,10 +187,13 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("輸入行程")),
+      appBar: AppBar(
+        title: const Text("輸入行程"),
+        elevation: 1,
+      ),
       body: Padding(
         padding: const EdgeInsets.all(20.0),
-        child: SingleChildScrollView( // ← 建議加這行避免內容超出
+        child: SingleChildScrollView(
           child: Column(
             children: [
               InputSection(
@@ -200,14 +204,109 @@ class _MyHomePageState extends State<MyHomePage> {
               if (isReconnecting)
                 Text(
                   "🔄 正在重新連接... 第 $retryCount 次",
-                  style: const TextStyle(color: Colors.orange, fontSize: 16),
+                  style: TextStyle(
+                    color: Colors.orange.shade700,
+                    fontSize: 16
+                  ),
                 ),
               const SizedBox(height: 10),
               if (responseMsg.isNotEmpty)
                 Text(
                   responseMsg,
-                  style: const TextStyle(color: Colors.blue, fontSize: 14),
+                  style: TextStyle(
+                    color: Colors.blue.shade700,
+                    fontSize: 14
+                  ),
                 ),
+              const SizedBox(height: 20),
+              // 行程列表區域
+              FutureBuilder<List<Map<String, dynamic>>>(
+                future: getSchedules(
+                    "${widget.selectedDay?.year}-${widget.selectedDay?.month}-${widget.selectedDay?.day}"),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return CircularProgressIndicator(
+                      color: Colors.blue.shade600,
+                    );
+                  } else if (snapshot.hasError) {
+                    return Text(
+                      '讀取失敗：${snapshot.error}',
+                      style: TextStyle(color: Colors.red.shade600),
+                    );
+                  } else {
+                    final scheduleList = snapshot.data!;
+
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '行程列表',
+                          style: TextStyle(
+                            fontSize: 18, 
+                            fontWeight: FontWeight.bold,
+                            color: Colors.blue.shade800,
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        ...scheduleList.map(
+                          (item) => Card(
+                            margin: const EdgeInsets.only(bottom: 10),
+                            elevation: 2,
+                            child: ListTile(
+                              leading: Icon(
+                                Icons.event,
+                                color: Colors.blue.shade600,
+                              ),
+                              title: Text(
+                                item['desc'] ?? item['name'] ?? '未知行程',
+                                style: TextStyle(
+                                  color: Colors.blue.shade800,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                              subtitle: Text(
+                                item['time'] ?? '時間未設定',
+                                style: TextStyle(
+                                  color: Colors.grey.shade600,
+                                ),
+                              ),
+                              trailing: scheduleList.isNotEmpty 
+                                  ? Icon(
+                                      Icons.cloud_done, 
+                                      color: Colors.green.shade600,
+                                    )
+                                  : Icon(
+                                      Icons.info_outline, 
+                                      color: Colors.grey.shade500,
+                                    ),
+                              onTap: () {
+                                if (widget.selectedDay != null) {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => DailySchedulePage(
+                                        selectedDate: widget.selectedDay!,
+                                      ),
+                                    ),
+                                  );
+                                }
+                              },
+                            ),
+                          ),
+                        ),
+                        if (scheduleList.isEmpty)
+                          Text(
+                            '今天沒有行程',
+                            style: TextStyle(
+                              color: Colors.grey.shade600,
+                              fontSize: 14,
+                            ),
+                          ),
+                      ],
+                    );
+                  }
+                },
+              ),
             ],
           ),
         ),

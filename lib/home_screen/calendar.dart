@@ -3,9 +3,9 @@
 import 'package:flutter/material.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../main.dart'; // 匯入你要跳轉到的頁面 MyHomePage
-import 'custom_bottom_app_bar.dart'; // 匯入自定義的底部應用欄
-import '../daliy_schedule/dailyschedule.dart';
+import '../main.dart';
+import 'custom_bottom_app_bar.dart';
+import '../daily_schedule/daily_schedule_page.dart';
 
 class CalendarScreen extends StatefulWidget {
   const CalendarScreen({super.key});
@@ -18,7 +18,10 @@ class _CalendarScreenState extends State<CalendarScreen> {
   DateTime _focusedDay = DateTime.now();
   DateTime? _selectedDay;
   List<Map<String, dynamic>> scheduleList = [];
-  bool isLoading = false; // 新增載入狀態
+  bool isLoading = false;
+  
+  // ✅ 加入格式狀態控制
+  CalendarFormat _calendarFormat = CalendarFormat.month;
 
   // 範例資料（作為備用）
   final Map<String, List<Map<String, String>>> _scheduleData = {
@@ -306,15 +309,110 @@ class _CalendarScreenState extends State<CalendarScreen> {
             firstDay: DateTime.utc(2020, 1, 1),
             lastDay: DateTime.utc(2030, 12, 31),
             focusedDay: _focusedDay,
+            
+            // ✅ 加入這些參數來控制格式切換
+            calendarFormat: _calendarFormat,
+            availableCalendarFormats: const {
+              CalendarFormat.month: '週檢視',//為了實際顯示，使用當前模式
+              CalendarFormat.twoWeeks: '月檢視',
+              CalendarFormat.week: '兩週檢視',
+            },
+            
             selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
             onDaySelected: (selectedDay, focusedDay) {
               setState(() {
                 _selectedDay = selectedDay;
                 _focusedDay = focusedDay;
-                scheduleList.clear(); // 清除舊資料
+                scheduleList.clear();
               });
-              _loadSchedules(); // 載入新資料
+              _loadSchedules();
             },
+            
+            // ✅ 加入格式切換回調
+            onFormatChanged: (format) {
+              setState(() {
+                _calendarFormat = format;
+              });
+            },
+            
+            calendarStyle: CalendarStyle(
+              // 你現有的樣式設定保持不變...
+              todayDecoration: BoxDecoration(
+                color: Colors.blue.shade400,
+                shape: BoxShape.circle,
+              ),
+              todayTextStyle: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+              selectedDecoration: BoxDecoration(
+                color: Colors.blue.shade600,
+                shape: BoxShape.circle,
+              ),
+              selectedTextStyle: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+              weekendTextStyle: TextStyle(
+                color: Colors.blue.shade700,
+              ),
+              defaultTextStyle: TextStyle(
+                color: Colors.grey.shade800,
+              ),
+              outsideTextStyle: TextStyle(
+                color: Colors.grey.shade400,
+              ),
+            ),
+            
+            headerStyle: HeaderStyle(
+              titleTextStyle: TextStyle(
+                color: Colors.blue.shade800,
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+              leftChevronIcon: Icon(
+                Icons.chevron_left,
+                color: Colors.blue.shade600,
+              ),
+              rightChevronIcon: Icon(
+                Icons.chevron_right,
+                color: Colors.blue.shade600,
+              ),
+              formatButtonTextStyle: TextStyle(
+                color: Colors.blue.shade700,
+              ),
+              formatButtonDecoration: BoxDecoration(
+                border: Border.all(
+                  color: Colors.blue.shade300,
+                ),
+                borderRadius: BorderRadius.circular(16),
+              ),
+            ),
+            
+            calendarBuilders: CalendarBuilders(
+              markerBuilder: (context, date, events) {
+                if (events.isNotEmpty) {
+                  return Container(
+                    margin: const EdgeInsets.only(top: 30),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: events.take(3).map((event) {
+                        return Container(
+                          width: 6,
+                          height: 6,
+                          margin: const EdgeInsets.symmetric(horizontal: 1),
+                          decoration: BoxDecoration(
+                            color: Colors.blue.shade600,
+                            shape: BoxShape.circle,
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  );
+                }
+                return null;
+              },
+            ),
           ),
           const SizedBox(height: 20),
           if (_selectedDay != null)
