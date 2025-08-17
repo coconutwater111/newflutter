@@ -9,6 +9,7 @@ import 'widget.dart';
 import 'home_screen/calendar.dart';
 import 'home_screen/custom_bottom_app_bar.dart';
 import 'daily_schedule/daily_schedule_page.dart';
+import 'daily_schedule/utils/schedule_utils.dart'; // ✅ 新增這個 import
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -174,21 +175,78 @@ class _MyHomePageState extends State<MyHomePage> {
     });
   }
 
-  // 讀取資料
-  Future<List<Map<String, dynamic>>> getSchedules(String date) async {
-    final snapshot = await FirebaseFirestore.instance
-        .collection('schedules')
-        .where('date', isEqualTo: date)
-        .get();
-    
-    return snapshot.docs.map((doc) => doc.data()).toList();
+  // ✅ 修正：使用與 daily_schedule 相同的資料結構
+  Future<List<Map<String, dynamic>>> getSchedules(DateTime selectedDate) async {
+    try {
+      // 使用與 daily_schedule 相同的路徑格式
+      final docPath = ScheduleUtils.formatDateKey(selectedDate);
+      
+      developer.log('🔍 載入行程列表：$docPath');
+      
+      final snapshot = await FirebaseFirestore.instance
+          .doc(docPath)
+          .collection('task_list')
+          .orderBy('index')
+          .get();
+
+      final schedules = snapshot.docs.map((doc) {
+        final data = doc.data();
+        return {
+          'id': doc.id,
+          'name': data['name'] ?? '',
+          'desc': data['desc'] ?? data['name'] ?? '未知行程',
+          'startTime': data['startTime'],
+          'endTime': data['endTime'],
+          'index': data['index'] ?? 0,
+        };
+      }).toList();
+
+      developer.log('✅ 成功載入 ${schedules.length} 筆行程');
+      return schedules;
+
+    } catch (e) {
+      developer.log('❌ 載入行程失敗：$e');
+      return [];
+    }
+  }
+
+  // ✅ 格式化時間顯示
+  String _formatScheduleTime(dynamic startTime, dynamic endTime) {
+    try {
+      if (startTime == null || endTime == null) return '時間未設定';
+      
+      String start = '';
+      String end = '';
+      
+      if (startTime is Timestamp) {
+        final startDate = startTime.toDate();
+        start = '${startDate.hour.toString().padLeft(2, '0')}:${startDate.minute.toString().padLeft(2, '0')}';
+      } else if (startTime is String && startTime.contains(':')) {
+        start = startTime;
+      }
+      
+      if (endTime is Timestamp) {
+        final endDate = endTime.toDate();
+        end = '${endDate.hour.toString().padLeft(2, '0')}:${endDate.minute.toString().padLeft(2, '0')}';
+      } else if (endTime is String && endTime.contains(':')) {
+        end = endTime;
+      }
+      
+      if (start.isNotEmpty && end.isNotEmpty) {
+        return '$start - $end';
+      }
+      
+      return start.isNotEmpty ? start : '時間未設定';
+    } catch (e) {
+      return '時間未設定';
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("輸入行程"),
+        title: const Text("今天有什麼行程？"),
         elevation: 1,
       ),
       body: Padding(
@@ -219,10 +277,9 @@ class _MyHomePageState extends State<MyHomePage> {
                   ),
                 ),
               const SizedBox(height: 20),
-              // 行程列表區域
+              // ✅ 修正：行程列表區域
               FutureBuilder<List<Map<String, dynamic>>>(
-                future: getSchedules(
-                    "${widget.selectedDay?.year}-${widget.selectedDay?.month}-${widget.selectedDay?.day}"),
+                future: getSchedules(widget.selectedDay ?? DateTime.now()), // ✅ 傳遞 DateTime
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return CircularProgressIndicator(
@@ -234,18 +291,30 @@ class _MyHomePageState extends State<MyHomePage> {
                       style: TextStyle(color: Colors.red.shade600),
                     );
                   } else {
-                    final scheduleList = snapshot.data!;
+                    final scheduleList = snapshot.data ?? [];
 
                     return Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          '行程列表',
-                          style: TextStyle(
-                            fontSize: 18, 
-                            fontWeight: FontWeight.bold,
-                            color: Colors.blue.shade800,
-                          ),
+                        Row(
+                          children: [
+                            Text(
+                              '行程列表',
+                              style: TextStyle(
+                                fontSize: 18, 
+                                fontWeight: FontWeight.bold,
+                                color: Colors.blue.shade800,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              '(${ScheduleUtils.formatDate(widget.selectedDay ?? DateTime.now())})', // ✅ 顯示日期
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.grey.shade600,
+                              ),
+                            ),
+                          ],
                         ),
                         const SizedBox(height: 10),
                         ...scheduleList.map(
@@ -258,14 +327,16 @@ class _MyHomePageState extends State<MyHomePage> {
                                 color: Colors.blue.shade600,
                               ),
                               title: Text(
-                                item['desc'] ?? item['name'] ?? '未知行程',
+                                item['name']?.isNotEmpty == true 
+                                    ? item['name'] 
+                                    : (item['desc'] ?? '未知行程'), // ✅ 優先顯示 name
                                 style: TextStyle(
                                   color: Colors.blue.shade800,
                                   fontWeight: FontWeight.w500,
                                 ),
                               ),
                               subtitle: Text(
-                                item['time'] ?? '時間未設定',
+                                _formatScheduleTime(item['startTime'], item['endTime']), // ✅ 格式化時間
                                 style: TextStyle(
                                   color: Colors.grey.shade600,
                                 ),
@@ -295,11 +366,28 @@ class _MyHomePageState extends State<MyHomePage> {
                           ),
                         ),
                         if (scheduleList.isEmpty)
-                          Text(
-                            '今天沒有行程',
-                            style: TextStyle(
-                              color: Colors.grey.shade600,
-                              fontSize: 14,
+                          Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: Colors.grey.shade50,
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: Colors.grey.shade200),
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.event_busy,
+                                  color: Colors.grey.shade400,
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  '${ScheduleUtils.formatDate(widget.selectedDay ?? DateTime.now())} 沒有行程',
+                                  style: TextStyle(
+                                    color: Colors.grey.shade600,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                       ],

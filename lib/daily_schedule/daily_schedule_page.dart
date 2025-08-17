@@ -6,6 +6,7 @@ import 'services/schedule_service.dart';
 import 'widgets/timeline_view.dart';
 import 'widgets/schedule_dialogs.dart';
 import 'utils/schedule_utils.dart';
+import '../main.dart';
 
 class DailySchedulePage extends StatefulWidget {
   final DateTime selectedDate;
@@ -20,7 +21,7 @@ class _DailySchedulePageState extends State<DailySchedulePage> {
   List<ScheduleModel> scheduleList = [];
   bool isLoading = true;
   final ScrollController _scrollController = ScrollController();
-  
+
   late final ScheduleService _scheduleService;
   late final ScheduleDialogs _dialogs;
 
@@ -44,14 +45,28 @@ class _DailySchedulePageState extends State<DailySchedulePage> {
     });
 
     try {
-      final schedules = await _scheduleService.loadDaySchedules(widget.selectedDate);
-      
+      final schedules = await _scheduleService.loadDaySchedules(
+        widget.selectedDate,
+      );
+
       setState(() {
         scheduleList = schedules;
         isLoading = false;
       });
 
-      if (schedules.isNotEmpty) {
+      // ✅ 新增詳細調試資訊
+      developer.log('✅ 載入完成，共 ${scheduleList.length} 筆日行程');
+      for (int i = 0; i < scheduleList.length; i++) {
+        final schedule = scheduleList[i];
+        developer.log('  [$i] ${schedule.name.isEmpty ? schedule.description : schedule.name}');
+        developer.log('      時間: ${schedule.timeRange}');
+        developer.log('      開始: ${schedule.startTime}');
+        developer.log('      結束: ${schedule.endTime}');
+        developer.log('      持續: ${schedule.startTime != null && schedule.endTime != null ? schedule.endTime!.difference(schedule.startTime!).inMinutes : 0} 分鐘');
+        developer.log('      有重疊: ${schedule.hasOverlap}');
+      }
+
+      if (scheduleList.isNotEmpty) {
         _scrollToFirstSchedule();
       }
     } catch (e) {
@@ -70,7 +85,10 @@ class _DailySchedulePageState extends State<DailySchedulePage> {
       if (firstScheduleHour != null) {
         final double itemHeight = 65.0;
         final double targetOffset = firstScheduleHour * itemHeight;
-        final double scrollOffset = (targetOffset - 100).clamp(0.0, double.infinity);
+        final double scrollOffset = (targetOffset - 100).clamp(
+          0.0,
+          double.infinity,
+        );
 
         _scrollController.animateTo(
           scrollOffset,
@@ -81,12 +99,19 @@ class _DailySchedulePageState extends State<DailySchedulePage> {
     });
   }
 
-
   @override
   Widget build(BuildContext context) {
+    // ✅ 在建構 TimelineView 之前加入調試
+    if (!isLoading) {
+      developer.log('🏗️ 準備建構 TimelineView，傳入資料：');
+      for (final schedule in scheduleList) {
+        developer.log('  - ${schedule.description}: ${schedule.timeRange} (${schedule.endTime!.difference(schedule.startTime!).inMinutes}分鐘)');
+      }
+    }
+
     return Scaffold(
       appBar: AppBar(
-        title: Text('${ScheduleUtils.formatDate(widget.selectedDate)} '),
+        title: Text('${ScheduleUtils.formatDate(widget.selectedDate)} 行程'),
         backgroundColor: Colors.lightBlue.shade50,
         foregroundColor: Colors.lightBlue.shade800,
         elevation: 1,
@@ -113,17 +138,20 @@ class _DailySchedulePageState extends State<DailySchedulePage> {
               onDeleteSchedule: _deleteSchedule,
             ),
       floatingActionButton: FloatingActionButton(
-        onPressed: _showAddScheduleDialog,
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => MyHomePage(selectedDay: widget.selectedDate),
+            ),
+          );
+        },
         backgroundColor: Colors.lightBlue.shade400,
         foregroundColor: Colors.white,
         tooltip: '新增行程',
         child: const Icon(Icons.add),
       ),
     );
-  }
-
-  void _showAddScheduleDialog() {
-    _dialogs.showAddScheduleDialog();
   }
 
   void _editSchedule(ScheduleModel schedule) {

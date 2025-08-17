@@ -23,18 +23,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
   // ✅ 加入格式狀態控制
   CalendarFormat _calendarFormat = CalendarFormat.month;
 
-  // 範例資料（作為備用）
-  final Map<String, List<Map<String, String>>> _scheduleData = {
-    '2025-08-13': [
-      {'desc': '範例會議', 'time': '09:00-10:00'},
-      {'desc': '範例健身房', 'time': '18:00-19:00'},
-    ],
-  };
 
-  String _dateToKey(DateTime date) =>
-      '${date.year.toString().padLeft(4, '0')}-'
-      '${date.month.toString().padLeft(2, '0')}-'
-      '${date.day.toString().padLeft(2, '0')}';
 
   // 從 Firebase 取得行程
   Future<void> _loadSchedules() async {
@@ -101,6 +90,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
       print('🔧 錯誤詳情：${e.runtimeType}');
       setState(() {
         isLoading = false;
+        scheduleList = []; // ✅ 確保錯誤時清空列表
       });
     }
   }
@@ -188,118 +178,19 @@ class _CalendarScreenState extends State<CalendarScreen> {
     return '$hour:$minute';
   }
 
-  // 測試 Firebase 結構
-  Future<void> _testFirebaseStructure() async {
-    try {
-      print('🔍 開始檢查 Firebase 結構...');
-      
-      // 檢查 tasks collection 是否存在
-      final tasksSnapshot = await FirebaseFirestore.instance
-          .collection('tasks')
-          .limit(5)
-          .get();
-    
-      print('📂 tasks collection 找到 ${tasksSnapshot.docs.length} 個文檔');
-      
-      for (var doc in tasksSnapshot.docs) {
-        print('📄 tasks collection 文檔 ID: ${doc.id}');
-        print('📄 tasks collection 文檔內容: ${doc.data()}');
-      }
-      
-      // 檢查特定路徑是否存在
-      final specificPath = await FirebaseFirestore.instance
-          .doc('tasks/2025')
-          .get();
-    
-      print('📋 tasks/2025 文檔存在: ${specificPath.exists}');
-      if (specificPath.exists) {
-        print('📋 tasks/2025 內容: ${specificPath.data()}');
-      }
-      
-      // 檢查更深層的路徑
-      final deeperPath = await FirebaseFirestore.instance
-          .doc('tasks/2025/08/04')
-          .get();
-    
-      print('📋 tasks/2025/08/04 文檔存在: ${deeperPath.exists}');
-      if (deeperPath.exists) {
-        print('📋 tasks/2025/08/04 內容: ${deeperPath.data()}');
-      }
-      
-      // 直接檢查 task_list subcollection
-      print('🔍 檢查 task_list subcollection...');
-      final taskListSnapshot = await FirebaseFirestore.instance
-          .doc('tasks/2025/08/04')
-          .collection('task_list')
-          .get();
-          
-      print('📋 tasks/2025/08/04/task_list 找到 ${taskListSnapshot.docs.length} 個文檔');
-      
-      for (var doc in taskListSnapshot.docs) {
-        print('📄 task_list 文檔 ID: ${doc.id}');
-        print('📄 task_list 文檔內容: ${doc.data()}');
-      }
-    
-      // 如果沒有資料，建立測試資料
-      if (taskListSnapshot.docs.isEmpty) {
-        print('📝 沒有找到資料，正在建立測試資料...');
-        
-        // 建立測試資料：tasks/2025/08/04/task_list
-        await FirebaseFirestore.instance
-            .doc('tasks/2025/08/04')
-            .collection('task_list')
-            .add({
-          'desc': '測試會議',
-          'endTime': Timestamp.fromDate(DateTime(2025, 8, 4, 10, 0)),
-          'index': 0,
-          'name': '重要會議',
-          'startTime': Timestamp.fromDate(DateTime(2025, 8, 4, 9, 0)),
-        });
-        
-        await FirebaseFirestore.instance
-            .doc('tasks/2025/08/04')
-            .collection('task_list')
-            .add({
-          'desc': '午餐約會',
-          'endTime': Timestamp.fromDate(DateTime(2025, 8, 4, 13, 0)),
-          'index': 1,
-          'name': '與朋友午餐',
-          'startTime': Timestamp.fromDate(DateTime(2025, 8, 4, 12, 0)),
-        });
-        
-        print('✅ 測試資料建立完成！');
-        
-        // 重新檢查建立後的資料
-        final newTaskListSnapshot = await FirebaseFirestore.instance
-            .doc('tasks/2025/08/04')
-            .collection('task_list')
-            .get();
-            
-        print('📋 測試資料建立後，tasks/2025/08/04/task_list 現在有 ${newTaskListSnapshot.docs.length} 個文檔');
-      }
-      
-    } catch (e) {
-      print('❌ 檢查 Firebase 結構時發生錯誤: $e');
-    }
-  }
-
   @override
   void initState() {
     super.initState();
     // 在頁面載入時檢查 Firebase 結構
     Future.delayed(Duration(seconds: 1), () {
-      _testFirebaseStructure();
+      //_testFirebaseStructure();
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    final selectedDateStr = _selectedDay == null ? '' : _dateToKey(_selectedDay!);
-    
-    // 優先顯示 Firebase 資料，沒有資料時才顯示範例資料
-    final displayList = scheduleList.isNotEmpty 
-        ? scheduleList 
-        : (_scheduleData[selectedDateStr] ?? []);
+    // ❌ 移除範例資料邏輯，只顯示 Firebase 資料
+    final displayList = scheduleList;
 
     return Scaffold(
       appBar: AppBar(title: const Text('行事曆')),
@@ -310,12 +201,12 @@ class _CalendarScreenState extends State<CalendarScreen> {
             lastDay: DateTime.utc(2030, 12, 31),
             focusedDay: _focusedDay,
             
-            // ✅ 加入這些參數來控制格式切換
+            // ✅ 格式切換控制
             calendarFormat: _calendarFormat,
             availableCalendarFormats: const {
-              CalendarFormat.month: '週檢視',//為了實際顯示，使用當前模式
-              CalendarFormat.twoWeeks: '月檢視',
-              CalendarFormat.week: '兩週檢視',
+              CalendarFormat.month: '月檢視',
+              CalendarFormat.twoWeeks: '兩週檢視',
+              CalendarFormat.week: '週檢視',
             },
             
             selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
@@ -328,7 +219,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
               _loadSchedules();
             },
             
-            // ✅ 加入格式切換回調
+            // ✅ 格式切換回調
             onFormatChanged: (format) {
               setState(() {
                 _calendarFormat = format;
@@ -336,7 +227,6 @@ class _CalendarScreenState extends State<CalendarScreen> {
             },
             
             calendarStyle: CalendarStyle(
-              // 你現有的樣式設定保持不變...
               todayDecoration: BoxDecoration(
                 color: Colors.blue.shade400,
                 shape: BoxShape.circle,
@@ -433,7 +323,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                   if (isLoading)
                     const Center(child: CircularProgressIndicator())
                   
-                  // 行程列表
+                  // ✅ 只顯示 Firebase 行程列表
                   else if (displayList.isNotEmpty)
                     Expanded(
                       child: ListView.builder(
@@ -449,11 +339,9 @@ class _CalendarScreenState extends State<CalendarScreen> {
                               leading: const Icon(Icons.event),
                               title: Text(item['desc'] ?? item['name'] ?? '未知行程'),
                               subtitle: Text(item['time'] ?? '時間未設定'),
-                              trailing: scheduleList.isNotEmpty 
-                                  ? const Icon(Icons.cloud_done, color: Colors.green)
-                                  : const Icon(Icons.info_outline, color: Colors.grey),
+                              // ✅ 移除範例資料的區別，都顯示雲朵圖標
+                              trailing: const Icon(Icons.cloud_done, color: Colors.green),
                               onTap: () {
-                                // 直接點擊行程項目跳轉到日行程頁面
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
