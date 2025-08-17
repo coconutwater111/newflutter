@@ -6,7 +6,7 @@ import 'services/schedule_service.dart';
 import 'widgets/timeline_view.dart';
 import 'widgets/schedule_dialogs.dart';
 import 'utils/schedule_utils.dart';
-import '../main.dart';
+import '../schedule_creation/schedule_creation_page.dart'; // ✅ 修正：使用新的行程創建頁面
 
 class DailySchedulePage extends StatefulWidget {
   final DateTime selectedDate;
@@ -54,7 +54,6 @@ class _DailySchedulePageState extends State<DailySchedulePage> {
         isLoading = false;
       });
 
-      // ✅ 新增詳細調試資訊
       developer.log('✅ 載入完成，共 ${scheduleList.length} 筆日行程');
       for (int i = 0; i < scheduleList.length; i++) {
         final schedule = scheduleList[i];
@@ -101,7 +100,6 @@ class _DailySchedulePageState extends State<DailySchedulePage> {
 
   @override
   Widget build(BuildContext context) {
-    // ✅ 在建構 TimelineView 之前加入調試
     if (!isLoading) {
       developer.log('🏗️ 準備建構 TimelineView，傳入資料：');
       for (final schedule in scheduleList) {
@@ -142,7 +140,8 @@ class _DailySchedulePageState extends State<DailySchedulePage> {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => MyHomePage(selectedDay: widget.selectedDate),
+              // ✅ 修正：使用新的行程創建頁面
+              builder: (context) => ScheduleCreationPage(selectedDay: widget.selectedDate),
             ),
           );
         },

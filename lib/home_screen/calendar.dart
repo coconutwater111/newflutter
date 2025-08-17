@@ -3,9 +3,9 @@
 import 'package:flutter/material.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../main.dart';
 import 'custom_bottom_app_bar.dart';
 import '../daily_schedule/daily_schedule_page.dart';
+import '../schedule_creation/schedule_creation_page.dart';
 
 class CalendarScreen extends StatefulWidget {
   const CalendarScreen({super.key});
@@ -384,7 +384,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => MyHomePage(selectedDay: _selectedDay),
+              builder: (context) => ScheduleCreationPage(selectedDay: _selectedDay),
             ),
           );
         },
