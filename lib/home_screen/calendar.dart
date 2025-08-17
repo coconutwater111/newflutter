@@ -5,6 +5,7 @@ import 'package:table_calendar/table_calendar.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../main.dart'; // 匯入你要跳轉到的頁面 MyHomePage
 import 'custom_bottom_app_bar.dart'; // 匯入自定義的底部應用欄
+import '../daliy_schedule/dailyschedule.dart';
 
 class CalendarScreen extends StatefulWidget {
   const CalendarScreen({super.key});
@@ -348,18 +349,22 @@ class _CalendarScreenState extends State<CalendarScreen> {
                             ),
                             child: ListTile(
                               leading: const Icon(Icons.event),
-                              title: Text(item['name'] ?? item['desc'] ?? '未知行程'),
-                              subtitle: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  if (item['desc'] != null && item['desc'] != item['name'])
-                                    Text('描述：${item['desc']}'),
-                                  Text('時間：${item['time']}'),
-                                ],
-                              ),
+                              title: Text(item['desc'] ?? item['name'] ?? '未知行程'),
+                              subtitle: Text(item['time'] ?? '時間未設定'),
                               trailing: scheduleList.isNotEmpty 
                                   ? const Icon(Icons.cloud_done, color: Colors.green)
                                   : const Icon(Icons.info_outline, color: Colors.grey),
+                              onTap: () {
+                                // 直接點擊行程項目跳轉到日行程頁面
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => DailySchedulePage(
+                                      selectedDate: _selectedDay!,
+                                    ),
+                                  ),
+                                );
+                              },
                             ),
                           );
                         },
