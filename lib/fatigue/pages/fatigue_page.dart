@@ -12,6 +12,22 @@ class FatiguePage extends StatefulWidget {
 }
 
 class _FatiguePageState extends State<FatiguePage> {
+  Widget buildActionButton({
+    required String label,
+    required VoidCallback onPressed,
+    Color? color,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      child: ElevatedButton(
+        onPressed: onPressed,
+        style: color != null
+            ? ElevatedButton.styleFrom(backgroundColor: color)
+            : null,
+        child: Text(label),
+      ),
+    );
+  }
   List<double> fatigueData = List.filled(24, 0.0);
   final String userId = 'testUser';
 
@@ -63,18 +79,25 @@ class _FatiguePageState extends State<FatiguePage> {
     }
   }
 
-  // 刪除疲勞度資料
-  Future<void> deleteFatigueData() async {
-    await FirebaseFirestore.instance
-        .collection('users')
-        .doc(userId)
-        .collection('fatigue_logs')
-        .doc(docId)
-        .delete();
-
+  // 重畫（清空繪圖區與數據，並同步雲端歸零）
+  Future<void> redrawFatigueChart() async {
     setState(() {
       fatigueData = List.filled(24, 0.0);
     });
+    chartKey.currentState?.resetChart();
+    try {
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
+          .collection('fatigue_logs')
+          .doc(docId)
+          .set({
+        'values': List.filled(24, 0.0),
+        'timestamp': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+    } catch (e) {
+      showMessage('雲端歸零失敗：$e');
+    }
   }
 
   // 顯示訊息
@@ -99,94 +122,115 @@ class _FatiguePageState extends State<FatiguePage> {
 
   @override
   Widget build(BuildContext context) {
+    final isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
+    final actionButtons = [
+      buildActionButton(label: '儲存', onPressed: saveFatigueData),
+      buildActionButton(
+        label: '重畫',
+        onPressed: () async => await redrawFatigueChart(),
+        color: Colors.orange,
+      ),
+      buildActionButton(
+        label: '查看數據',
+        onPressed: () async {
+          final result = await Navigator.push<List<double>>(
+            context,
+            MaterialPageRoute(
+              builder: (context) => FatigueDisplayPage(
+                intelligenceType: widget.intelligenceType,
+                initialFatigueData: List<double>.from(fatigueData),
+              ),
+            ),
+          );
+          if (result != null) {
+            setState(() {
+              fatigueData = result;
+            });
+          }
+        },
+        color: Colors.blue,
+      ),
+    ];
+
     return Scaffold(
-      appBar: AppBar(title: Text('${widget.intelligenceType} 疲勞度')),
+      appBar: AppBar(
+        title: Text('${widget.intelligenceType} 疲勞度'),
+        actions: isLandscape ? actionButtons : null,
+      ),
       body: Column(
         children: [
-          // FatigueChart 傳入 key
-          Expanded(
-            child: FatigueChart(
-              key: chartKey,
-              onFatigueValuesChanged: updateFatigueData,
-            ),
-          ),
-          const Divider(),
-          Padding(
-            padding: const EdgeInsets.all(12.0),
-            child: Text(
-              '疲勞值 (24 小時)：\n${fatigueData.map((v) => v.toStringAsFixed(1)).join(', ')}',
-              style: const TextStyle(fontSize: 14),
-            ),
-          ),
-          const SizedBox(height: 10),
-          Wrap(
-            spacing: 12,
-            runSpacing: 10,
-            alignment: WrapAlignment.center,
-            children: [
-              ElevatedButton(onPressed: saveFatigueData, child: const Text('儲存')),
-              ElevatedButton(
-                onPressed: () async {
-                  final confirm = await showDialog<bool>(
-                    context: context,
-                    builder: (ctx) => AlertDialog(
-                      title: const Text('確定刪除？'),
-                      content: const Text('這會刪除所有疲勞資料'),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.pop(ctx, false),
-                          child: const Text('取消'),
-                        ),
-                        TextButton(
-                          onPressed: () => Navigator.pop(ctx, true),
-                          child: const Text('刪除'),
-                        ),
-                      ],
-                    ),
-                  );
-                  if (confirm == true) {
-                    await deleteFatigueData();
-                    chartKey.currentState?.resetChart(); // ← 刪除時重置圖形
-                  }
-                },
-                style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-                child: const Text('刪除'),
+              Expanded(
+                child: FatigueChart(
+                  key: chartKey,
+                  onFatigueValuesChanged: updateFatigueData,
+                  initialFatigueValues: fatigueData,
+                ),
               ),
-              // 👉 新增「查看數據」按鈕
-              ElevatedButton(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => FatigueDisplayPage(
-                        intelligenceType: widget.intelligenceType,
+              const Divider(),
+              Builder(
+                builder: (context) {
+                  return Column(
+                    children: [
+                      if (isLandscape) const SizedBox(height: 32),
+                      Padding(
+                        padding: const EdgeInsets.all(12.0),
+                        child: Align(
+                          alignment: Alignment.topLeft,
+                          child: Text(
+                            '疲勞值 (24 小時)：\n${fatigueData.map((v) => v.toStringAsFixed(1)).join(', ')}',
+                            style: const TextStyle(fontSize: 14),
+                          ),
+                        ),
                       ),
-                    ),
+                      const SizedBox(height: 10),
+                    ],
                   );
                 },
-                style: ElevatedButton.styleFrom(backgroundColor: Colors.blue),
-                child: const Text('查看數據'),
               ),
+              if (!isLandscape)
+                Wrap(
+                  spacing: 12,
+                  runSpacing: 10,
+                  alignment: WrapAlignment.center,
+                  children: actionButtons,
+                ),
+              const SizedBox(height: 20),
             ],
           ),
-          const SizedBox(height: 20),
-        ],
-      ),
-    );
+        );
   }
 }
 
 // ================== FatigueDisplayPage (顯示數據) ==================
 class FatigueDisplayPage extends StatefulWidget {
   final String intelligenceType; // 接收智能類型參數
+  final List<double>? initialFatigueData;
 
-  const FatigueDisplayPage({super.key, required this.intelligenceType});
+  const FatigueDisplayPage({super.key, required this.intelligenceType, this.initialFatigueData});
 
   @override
   FatigueDisplayPageState createState() => FatigueDisplayPageState();
 }
 
 class FatigueDisplayPageState extends State<FatigueDisplayPage> {
+  // 新增：即時儲存到 Firebase
+  Future<void> saveFatigueData() async {
+    try {
+      String docId = 'fatigue_${widget.intelligenceType}';
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
+          .collection('fatigue_logs')
+          .doc(docId)
+          .set({
+        'values': fatigueData,
+        'timestamp': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+    } catch (e) {
+      // 可選：顯示錯誤訊息
+      // ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('儲存失敗: $e')));
+    }
+  }
   List<double> fatigueData = List.filled(24, 0.0);
   final String userId = 'testUser';
 
@@ -217,7 +261,10 @@ class FatigueDisplayPageState extends State<FatigueDisplayPage> {
   @override
   void initState() {
     super.initState();
-    loadFatigueData();
+  fatigueData = widget.initialFatigueData != null
+    ? List<double>.from(widget.initialFatigueData!)
+    : List.filled(24, 0.0);
+  loadFatigueData();
   }
 
   @override
@@ -225,6 +272,12 @@ class FatigueDisplayPageState extends State<FatigueDisplayPage> {
     return Scaffold(
       appBar: AppBar(
         title: Text('${widget.intelligenceType} 疲勞度數值'),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            Navigator.pop(context, fatigueData); // 返回時回傳最新數據
+          },
+        ),
       ),
       body: Column(
         children: [
@@ -235,14 +288,31 @@ class FatigueDisplayPageState extends State<FatigueDisplayPage> {
               itemBuilder: (context, index) {
                 double value = fatigueData[index];
                 return Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
                   child: Row(
                     children: [
                       SizedBox(width: 50, child: Text('$index:00')),
-                      Padding(
-                        padding: const EdgeInsets.only(left: 8.0),
-                        child: Text(value.toStringAsFixed(1)),
+                      Expanded(
+                        child: Slider(
+                          value: value,
+                          min: 0,
+                          max: 10,
+                          divisions: 100,
+                          label: value.toStringAsFixed(1),
+                          onChanged: (newValue) async {
+                            setState(() {
+                              fatigueData[index] = newValue;
+                            });
+                            await saveFatigueData(); // 即時同步儲存
+                          },
+                        ),
+                      ),
+                      SizedBox(
+                        width: 40,
+                        child: Text(
+                          value.toStringAsFixed(1),
+                          textAlign: TextAlign.right,
+                        ),
                       ),
                     ],
                   ),
