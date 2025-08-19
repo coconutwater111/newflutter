@@ -17,6 +17,12 @@ class ScheduleListWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // 過濾掉空資料的行程
+    final filteredList = scheduleList.where((item) =>
+      (item.desc.trim().isNotEmpty) &&
+      (item.time.trim().isNotEmpty)
+    ).toList();
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -28,20 +34,20 @@ class ScheduleListWidget extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 10),
-        
+
         // 載入中指示器
         if (isLoading)
           const Expanded(
             child: Center(child: CircularProgressIndicator()),
           )
-        
-        // 顯示行程列表
-        else if (scheduleList.isNotEmpty)
+
+        // 顯示過濾後的行程列表
+        else if (filteredList.isNotEmpty)
           Expanded(
             child: ListView.builder(
-              itemCount: scheduleList.length,
+              itemCount: filteredList.length,
               itemBuilder: (context, index) {
-                final item = scheduleList[index];
+                final item = filteredList[index];
                 return _ScheduleListItem(
                   item: item,
                   selectedDay: selectedDay,
@@ -49,7 +55,7 @@ class ScheduleListWidget extends StatelessWidget {
               },
             ),
           )
-        
+
         // 無行程時顯示
         else
           const Expanded(

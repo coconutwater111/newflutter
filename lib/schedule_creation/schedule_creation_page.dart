@@ -119,8 +119,15 @@ class _ScheduleCreationPageState extends State<ScheduleCreationPage> {
         }
 
         final scheduleList = snapshot.data ?? [];
+        
+        // 假設 schedules 是你要顯示或儲存的行程清單
+        final filteredSchedules = scheduleList.where((item) =>
+          (item['desc']?.trim().isNotEmpty ?? false) &&
+          (item['time']?.trim().isNotEmpty ?? false)
+        ).toList();
+
         return _scheduleService.buildScheduleListWidget(
-          scheduleList,
+          filteredSchedules,
           selectedDate,
           context,
         );
