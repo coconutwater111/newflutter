@@ -162,7 +162,7 @@ class ScheduleCreationService {
       final timeB = _parseTimeForComparison(b['startTime']);
       
       // 詳細的 debug 訊息
-      developer.log("比較時間: ${a['startTime']} (${timeA}) vs ${b['startTime']} (${timeB})", 
+      developer.log("比較時間: ${a['startTime']} ($timeA) vs ${b['startTime']} ($timeB)", 
                    name: 'TimeComparison');
       
       if (timeA == null && timeB == null) return 0;
