@@ -9,7 +9,7 @@ import '../schedule_creation/schedule_creation_page.dart';
 import 'models/schedule_item.dart';
 import 'services/calendar_firebase_service.dart';
 import 'widgets/custom_calendar_widget.dart';
-import 'widgets/schedule_list_widget.dart';
+import '../../shared/widgets/schedule_list_widget.dart';
 
 class CalendarScreen extends StatefulWidget {
   const CalendarScreen({super.key});

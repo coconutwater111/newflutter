@@ -43,9 +43,9 @@ class ScheduleCreationService {
     DateTime selectedDate,
     BuildContext context,
   ) {
-    // 自動排序行程列表
-    final sortedList = scheduleList.isNotEmpty ? sortScheduleList(scheduleList) : scheduleList;
-    
+    // 先過濾有效行程，再排序
+    final validList = filterValidSchedulesMap(scheduleList);
+    final sortedList = validList.isNotEmpty ? sortScheduleList(validList) : validList;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -57,6 +57,17 @@ class ScheduleCreationService {
           _buildEmptyState(selectedDate),
       ],
     );
+  }
+
+  /// 過濾有效行程（Map 版本）
+  List<Map<String, dynamic>> filterValidSchedulesMap(List<Map<String, dynamic>> list) {
+    return list.where((item) {
+      final desc = (item['desc'] ?? '').toString().trim();
+      final time = (item['time'] ?? '').toString().trim();
+      // 兼容 name 欄位
+      final name = (item['name'] ?? '').toString().trim();
+      return (desc.isNotEmpty || name.isNotEmpty) && time.isNotEmpty;
+    }).toList();
   }
 
   Widget _buildHeader(DateTime selectedDate) {
