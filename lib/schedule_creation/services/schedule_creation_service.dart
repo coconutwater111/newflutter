@@ -5,6 +5,25 @@ import '../../daily_schedule/daily_schedule_page.dart';
 import '../../daily_schedule/utils/schedule_utils.dart';
 
 class ScheduleCreationService {
+  /// 新增行程到正確的 Firestore 路徑（tasks/yyyy/MM/dd/task_list）
+  Future<void> addScheduleToTaskList({
+    required DateTime selectedDate,
+    required String name,
+    required String desc,
+    required dynamic startTime,
+    required dynamic endTime,
+  }) async {
+    final docPath = ScheduleUtils.formatDateKey(selectedDate); // tasks/yyyy/MM/dd
+    await FirebaseFirestore.instance
+        .doc(docPath)
+        .collection('task_list')
+        .add({
+      'desc': desc,
+      'startTime': startTime,
+      'endTime': endTime,
+      'createdAt': FieldValue.serverTimestamp(),
+    });
+  }
   // ✅ 格式化時間顯示
   String formatScheduleTime(dynamic startTime, dynamic endTime) {
     try {
@@ -63,10 +82,8 @@ class ScheduleCreationService {
   List<Map<String, dynamic>> filterValidSchedulesMap(List<Map<String, dynamic>> list) {
     return list.where((item) {
       final desc = (item['desc'] ?? '').toString().trim();
-      final time = (item['time'] ?? '').toString().trim();
-      // 兼容 name 欄位
-      final name = (item['name'] ?? '').toString().trim();
-      return (desc.isNotEmpty || name.isNotEmpty) && time.isNotEmpty;
+      final hasTime = item['startTime'] != null || item['endTime'] != null;
+      return desc.isNotEmpty && hasTime;
     }).toList();
   }
 

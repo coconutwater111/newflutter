@@ -39,30 +39,27 @@ class FirebaseService {
   }
 
   static void _sortSchedulesByTime(List<Map<String, dynamic>> schedules) {
+    int parseMinutes(dynamic timeValue) {
+      if (timeValue == null) return 0;
+      if (timeValue is Timestamp) {
+        final date = timeValue.toDate();
+        return date.hour * 60 + date.minute;
+      }
+      if (timeValue is String && timeValue.contains(':')) {
+        final parts = timeValue.split(':');
+        if (parts.length >= 2) {
+          final hour = int.tryParse(parts[0].trim()) ?? 0;
+          final minute = int.tryParse(parts[1].trim()) ?? 0;
+          return hour * 60 + minute;
+        }
+      }
+      return 0;
+    }
+
     schedules.sort((a, b) {
-      final startTimeA = a['startTime'];
-      final startTimeB = b['startTime'];
-      
-      if (startTimeA == null && startTimeB == null) return 0;
-      if (startTimeA == null) return 1;
-      if (startTimeB == null) return -1;
-      
-      if (startTimeA is Timestamp && startTimeB is Timestamp) {
-        return startTimeA.compareTo(startTimeB);
-      }
-      
-      try {
-        DateTime dateA = startTimeA is Timestamp 
-            ? startTimeA.toDate() 
-            : DateTime.parse(startTimeA.toString());
-        DateTime dateB = startTimeB is Timestamp 
-            ? startTimeB.toDate() 
-            : DateTime.parse(startTimeB.toString());
-        return dateA.compareTo(dateB);
-      } catch (e) {
-        developer.log('⚠️ 時間比較失敗，維持原順序：$e');
-        return 0;
-      }
+      final aMin = parseMinutes(a['startTime']);
+      final bMin = parseMinutes(b['startTime']);
+      return aMin.compareTo(bMin);
     });
   }
 

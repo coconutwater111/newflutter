@@ -23,6 +23,8 @@ class _InputSectionState extends State<InputSection> {
   List<TextEditingController> _descControllers = [];
   int _visibleTaskCount = 1;
 
+  int? _selectedRecommend; // 0: 第一組, 1: 第二組, null: 都沒選
+
   void _updateSliders(int count) {
     setState(() {
       _taskCount = count;
@@ -89,37 +91,95 @@ class _InputSectionState extends State<InputSection> {
 
   @override
   Widget build(BuildContext context) {
-    final tsDisplay =
-        _ts == null ? '選擇開始時間 Ts' : '開始時間 Ts：${_ts!.format(context)}';
-    final teDisplay =
-        _te == null ? '選擇結束時間 Te' : '結束時間 Te：${_te!.format(context)}';
+    final tsDisplay = _ts == null ? '選擇開始時間' : _ts!.format(context);
+    final teDisplay = _te == null ? '選擇結束時間' : _te!.format(context);
+
+    const recommendedStart1 = TimeOfDay(hour: 8, minute: 0);
+    const recommendedEnd1 = TimeOfDay(hour: 22, minute: 0);
+    const recommendedStart2 = TimeOfDay(hour: 9, minute: 0);
+    const recommendedEnd2 = TimeOfDay(hour: 17, minute: 0);
 
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Center(
-            child: ElevatedButton(
-              onPressed: () => _pickTime(context, true),
-              child: Text(tsDisplay),
-            ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              ElevatedButton(
+                onPressed: () => _pickTime(context, true),
+                child: Text(tsDisplay),
+              ),
+              const SizedBox(width: 8),
+              const Text('～', style: TextStyle(fontSize: 20)),
+              const SizedBox(width: 8),
+              ElevatedButton(
+                onPressed: () => _pickTime(context, false),
+                child: Text(teDisplay),
+              ),
+            ],
           ),
           const SizedBox(height: 12),
-          Center(
-            child: ElevatedButton(
-              onPressed: () => _pickTime(context, false),
-              child: Text(teDisplay),
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 400),
+            height: _selectedRecommend == null ? 48 : 0, // 推薦時間區塊高度
+            child: AnimatedOpacity(
+              opacity: _selectedRecommend == null ? 1.0 : 0.0,
+              duration: const Duration(milliseconds: 400),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  // 第一個推薦時間
+                  AnimatedSlide(
+                    offset: _selectedRecommend != null ? const Offset(-1.0, 0) : Offset.zero,
+                    duration: const Duration(milliseconds: 400),
+                    child: ChoiceChip(
+                      label: const Text('08:00 ～ 22:00'),
+                      selected: _selectedRecommend == 0,
+                      onSelected: (selected) {
+                        setState(() {
+                          _ts = recommendedStart1;
+                          _te = recommendedEnd1;
+                          _selectedRecommend = 0;
+                        });
+                      },
+                      selectedColor: Colors.green[100],
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  // 第二個推薦時間
+                  AnimatedSlide(
+                    offset: _selectedRecommend != null ? const Offset(1.0, 0) : Offset.zero,
+                    duration: const Duration(milliseconds: 400),
+                    child: ChoiceChip(
+                      label: const Text('09:00 ～ 17:00'),
+                      selected: _selectedRecommend == 1,
+                      onSelected: (selected) {
+                        setState(() {
+                          _ts = recommendedStart2;
+                          _te = recommendedEnd2;
+                          _selectedRecommend = 1;
+                        });
+                      },
+                      selectedColor: Colors.green[100],
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
           TextField(
             controller: _nController,
             decoration: const InputDecoration(
-              labelText: '任務個數 n',
+              labelText: '任務個數',
               border: OutlineInputBorder(),
+              alignLabelWithHint: true,
+              labelStyle: TextStyle(fontSize: 16, fontWeight: FontWeight.normal),
             ),
             keyboardType: TextInputType.number,
+            textAlign: TextAlign.center,
             onChanged: (value) {
               final parsed = int.tryParse(value);
               if (parsed != null && parsed > 0) {
@@ -133,7 +193,13 @@ class _InputSectionState extends State<InputSection> {
             },
           ),
           const SizedBox(height: 20),
-          for (int i = 0; i < _visibleTaskCount && i < _descControllers.length && i < _kValues.length; i++)
+          for (
+            int i = 0;
+            i < _visibleTaskCount &&
+                i < _descControllers.length &&
+                i < _kValues.length;
+            i++
+          )
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 6),
               child: Column(
