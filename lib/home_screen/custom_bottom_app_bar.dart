@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../flchart_fristpage.dart'; // 新增這行，確保路徑正確
 
 class CustomBottomAppBar extends StatelessWidget {
   const CustomBottomAppBar({
@@ -34,57 +35,41 @@ class CustomBottomAppBar extends StatelessWidget {
               onPressed: () {
                 showModalBottomSheet(
                   context: context,
-                  builder:
-                      (context) => Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          ListTile(
-                            leading: const Icon(Icons.home),
-                            title: const Text('首頁'),
-                            onTap: () {
-                              Navigator.pop(context); // 關閉 bottom sheet
-                              Navigator.of(context).popUntil((route) => route.isFirst); // 回到首頁（CalendarScreen）
-                              /*showDialog(
-                                context: context,
-                                barrierDismissible: true,
-                                builder: (dialogContext) => Center(
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 24, vertical: 16),
-                                    decoration: BoxDecoration(
-                                      color: Colors.black.withAlpha(
-                                          (0.7 * 255).toInt()),
-                                      borderRadius: BorderRadius.circular(16),
-                                    ),
-                                    child: const Text(
-                                      '首頁被點擊了',
-                                      style: TextStyle(
-                                          color: Colors.white, fontSize: 18),
-                                    ),
-                                  ),
-                                ),
-                              );*/
-                              Future.delayed(const Duration(seconds: 1), () {
-                                // 用 dialogContext 判斷是否還能 pop
-                                // ignore: use_build_context_synchronously
-                                if (Navigator.canPop(context)) {
-                                  // ignore: use_build_context_synchronously
-                                  Navigator.of(context, rootNavigator: true).pop();
-                                }
-                              });
-                            },
-                          ),
-                          ListTile(
-                            leading: const Icon(Icons.settings),
-                            title: const Text('設定'),
-                            onTap: () {
-                              // 點擊後的動作
-                              Navigator.pop(context);
-                            },
-                          ),
-                          // 可以繼續加入更多選單項目
-                        ],
+                  builder: (context) => Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      ListTile(
+                        leading: const Icon(Icons.home),
+                        title: const Text('首頁'),
+                        onTap: () {
+                          Navigator.pop(context); // 關閉 bottom sheet
+                          Navigator.of(context).popUntil((route) => route.isFirst); // 回到首頁
+                          // 不要再用 Future.delayed + context
+                        },
                       ),
+                      ListTile(
+                        leading: const Icon(Icons.settings),
+                        title: const Text('設定'),
+                        onTap: () {
+                          Navigator.pop(context);
+                        },
+                      ),
+                      ListTile(
+                        leading: const Icon(Icons.show_chart),
+                        title: const Text('疲勞度繪圖'),
+                        onTap: () {
+                          Navigator.pop(context);
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const Flchartfristpage(),
+                            ),
+                          );
+                        },
+                      ),
+                      // 可以繼續加入更多選單項目
+                    ],
+                  ),
                 );
               },
             ),
