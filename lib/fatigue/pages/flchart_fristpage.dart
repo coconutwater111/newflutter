@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:data_transmit/fatigue_page.dart';
+import 'fatigue_page.dart';
 
 class Flchartfristpage extends StatelessWidget {
   const Flchartfristpage({super.key});
@@ -69,6 +69,3 @@ class Flchartfristpage extends StatelessWidget {
     );
   }
 }
-
-
-

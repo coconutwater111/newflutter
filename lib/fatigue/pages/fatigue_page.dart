@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:data_transmit/fatigue_chart.dart';
+import '../widgets/fatigue_chart.dart';
 
 // ================== FatiguePage (編輯與儲存) ==================
 class FatiguePage extends StatefulWidget {
@@ -255,4 +255,3 @@ class FatigueDisplayPageState extends State<FatigueDisplayPage> {
     );
   }
 }
-

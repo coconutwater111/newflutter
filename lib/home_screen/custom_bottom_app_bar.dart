@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../flchart_fristpage.dart'; // 新增這行，確保路徑正確
+import 'package:data_transmit/fatigue/pages/flchart_fristpage.dart';
 
 class CustomBottomAppBar extends StatelessWidget {
   const CustomBottomAppBar({
