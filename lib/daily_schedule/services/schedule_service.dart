@@ -16,12 +16,22 @@ class ScheduleService {
       final snapshot = await _firestore
           .doc(docPath)
           .collection('task_list')
-          .orderBy('index')
+          .orderBy('startTime') // 改為按照 startTime 排序，與主頁面一致
           .get();
 
       final schedules = snapshot.docs.map((doc) {
         return ScheduleModel.fromFirestore(doc, selectedDate);
       }).toList();
+
+      // 客戶端再次排序，確保按時間順序顯示（與主頁面邏輯一致）
+      schedules.sort((a, b) {
+        if (a.startTime != null && b.startTime != null) {
+          return a.startTime!.compareTo(b.startTime!);
+        }
+        if (a.startTime != null) return -1;
+        if (b.startTime != null) return 1;
+        return a.index.compareTo(b.index);
+      });
 
       // 檢查時間重疊
       _checkForOverlaps(schedules);

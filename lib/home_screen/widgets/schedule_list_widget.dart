@@ -88,6 +88,7 @@ class _ScheduleListItem extends StatelessWidget {
             MaterialPageRoute(
               builder: (context) => DailySchedulePage(
                 selectedDate: selectedDay,
+                initialScheduleId: item.id, // 傳遞要定位的行程 ID
               ),
             ),
           );

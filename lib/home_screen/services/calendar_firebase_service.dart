@@ -18,36 +18,49 @@ class CalendarFirebaseService {
       // 建構文檔路徑到 task_list：tasks/2025/08/04
       final basePath = 'tasks/$year/$month/$day';
       
-      print('🔍 正在載入路徑：$basePath/task_list 的所有行程');
-      
       // 讀取 task_list subcollection
       final snapshot = await _firestore
           .doc(basePath)
           .collection('task_list')
-          .orderBy('index') // 按照 index 排序
           .get();
     
       if (snapshot.docs.isNotEmpty) {
         final list = snapshot.docs.map((doc) {
           final data = doc.data();
-          print('📄 找到行程 ID: ${doc.id}');
-          print('📋 行程內容：$data');
-          
-          return ScheduleItem.fromFirebaseDoc(data);
+          return ScheduleItem.fromFirebaseDoc(data, doc.id);
         }).toList();
         
-        print('✅ 載入完成，共 ${list.length} 筆行程');
+        // 客戶端智能排序
+        list.sort((a, b) {
+          final aTime = a.sortableDateTime;
+          final bTime = b.sortableDateTime;
+          
+          // 如果都有解析成功的時間，按時間排序
+          if (aTime != null && bTime != null) {
+            return aTime.compareTo(bTime);
+          }
+          
+          // 如果時間解析失敗，嘗試按字符串排序
+          if (a.startTime.isNotEmpty && b.startTime.isNotEmpty) {
+            return a.startTime.compareTo(b.startTime);
+          }
+          
+          // 如果只有一個有時間，有時間的排在前面
+          if (aTime != null || a.startTime.isNotEmpty) return -1;
+          if (bTime != null || b.startTime.isNotEmpty) return 1;
+          
+          // 最後按 index 排序
+          return a.index.compareTo(b.index);
+        });
+        
         return list;
         
       } else {
-        print('⚠️ 沒有找到該日期的行程：$basePath/task_list');
         return [];
       }
       
     } catch (e) {
-      print('❌ 載入行程時發生錯誤：$e');
-      print('🔧 錯誤詳情：${e.runtimeType}');
-      rethrow; // 重新拋出錯誤讓調用方處理
+      rethrow;
     }
   }
 
@@ -86,10 +99,7 @@ class CalendarFirebaseService {
         'index': newIndex,
       });
       
-      print('✅ 成功新增行程到 $basePath/task_list');
-      
     } catch (e) {
-      print('❌ 新增行程失敗：$e');
       rethrow;
     }
   }

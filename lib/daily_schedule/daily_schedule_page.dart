@@ -10,8 +10,13 @@ import '../schedule_creation/schedule_creation_page.dart'; // ✅ 修正：使�
 
 class DailySchedulePage extends StatefulWidget {
   final DateTime selectedDate;
+  final String? initialScheduleId; // 新增：初始要顯示的行程 ID
 
-  const DailySchedulePage({super.key, required this.selectedDate});
+  const DailySchedulePage({
+    super.key, 
+    required this.selectedDate,
+    this.initialScheduleId, // 可選參數
+  });
 
   @override
   State<DailySchedulePage> createState() => _DailySchedulePageState();
@@ -66,7 +71,7 @@ class _DailySchedulePageState extends State<DailySchedulePage> {
       }
 
       if (scheduleList.isNotEmpty) {
-        _scrollToFirstSchedule();
+        _scrollToTargetSchedule();
       }
     } catch (e) {
       developer.log('❌ 載入日行程失敗：$e');
@@ -76,14 +81,30 @@ class _DailySchedulePageState extends State<DailySchedulePage> {
     }
   }
 
-  void _scrollToFirstSchedule() {
+  void _scrollToTargetSchedule() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!_scrollController.hasClients || scheduleList.isEmpty) return;
 
-      final firstScheduleHour = scheduleList.first.startTime?.hour;
-      if (firstScheduleHour != null) {
+      // 如果指定了初始行程 ID，嘗試定位到該行程
+      int targetIndex = 0;
+      if (widget.initialScheduleId != null) {
+        final targetScheduleIndex = scheduleList.indexWhere(
+          (schedule) => schedule.id == widget.initialScheduleId,
+        );
+        if (targetScheduleIndex != -1) {
+          targetIndex = targetScheduleIndex;
+          developer.log('🎯 定位到指定行程：${scheduleList[targetIndex].name}');
+        } else {
+          developer.log('⚠️ 未找到指定行程 ID: ${widget.initialScheduleId}，將定位到第一個行程');
+        }
+      }
+
+      final targetSchedule = scheduleList[targetIndex];
+      final targetHour = targetSchedule.startTime?.hour;
+      
+      if (targetHour != null) {
         final double itemHeight = 65.0;
-        final double targetOffset = firstScheduleHour * itemHeight;
+        final double targetOffset = targetHour * itemHeight;
         final double scrollOffset = (targetOffset - 100).clamp(
           0.0,
           double.infinity,
@@ -116,7 +137,7 @@ class _DailySchedulePageState extends State<DailySchedulePage> {
         actions: [
           IconButton(
             icon: Icon(Icons.first_page, color: Colors.lightBlue.shade600),
-            onPressed: scheduleList.isNotEmpty ? _scrollToFirstSchedule : null,
+            onPressed: scheduleList.isNotEmpty ? _scrollToTargetSchedule : null,
             tooltip: '跳到第一筆行程',
           ),
           IconButton(

@@ -61,9 +61,9 @@ class CalendarStyles {
 
   /// 獲取可用的日曆格式
   static Map<CalendarFormat, String> get availableCalendarFormats => const {
-    CalendarFormat.month: '月檢視',
-    CalendarFormat.twoWeeks: '兩週檢視',
-    CalendarFormat.week: '週檢視',
+    CalendarFormat.month: '週',
+    CalendarFormat.twoWeeks: '月',
+    CalendarFormat.week: '兩週',
   };
 
   /// 日曆建構器
