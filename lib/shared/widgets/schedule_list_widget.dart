@@ -1,9 +1,9 @@
+
 import 'package:flutter/material.dart';
 import '../../home_screen/models/schedule_item.dart';
 import '../../daily_schedule/daily_schedule_page.dart';
 import '../../shared/utils/schedule_filters.dart';
 
-/// 行程列表顯示組件（共用元件）
 class ScheduleListWidget extends StatelessWidget {
   final DateTime selectedDay;
   final List<ScheduleItem> scheduleList;
@@ -56,7 +56,6 @@ class ScheduleListWidget extends StatelessWidget {
   }
 }
 
-/// 行程列表項組件
 class _ScheduleListItem extends StatelessWidget {
   final ScheduleItem item;
   final DateTime selectedDay;
@@ -84,7 +83,7 @@ class _ScheduleListItem extends StatelessWidget {
             MaterialPageRoute(
               builder: (context) => DailySchedulePage(
                 selectedDate: selectedDay,
-                initialScheduleId: item.id, // 傳遞要定位的行程 ID
+                initialScheduleId: item.id,
               ),
             ),
           );
@@ -94,17 +93,15 @@ class _ScheduleListItem extends StatelessWidget {
   }
 }
 
-/// 無行程時的空狀態組件
 class _EmptyScheduleWidget extends StatelessWidget {
   const _EmptyScheduleWidget();
 
   @override
   Widget build(BuildContext context) {
-    return const Center(
+    return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.event_busy, size: 64, color: Colors.grey),
+        children: const [
           SizedBox(height: 16),
           Text(
             '此天尚無行程',

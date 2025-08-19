@@ -5,6 +5,26 @@ import '../models/schedule_model.dart';
 import '../utils/schedule_utils.dart';
 
 class ScheduleService {
+  Future<void> updateSchedule(ScheduleModel schedule) async {
+    try {
+      // 這裡假設你有日期資訊可推算 doc 路徑，若 schedule 有日期欄位請改用 schedule.date
+      final docPath = ScheduleUtils.formatDateKey(schedule.startTime ?? DateTime.now());
+      await _firestore
+          .doc(docPath)
+          .collection('task_list')
+          .doc(schedule.id)
+          .update({
+        'desc': schedule.description,
+        'startTime': schedule.startTime,
+        'endTime': schedule.endTime,
+        'index': schedule.index,
+      });
+      developer.log('✅ 更新行程成功');
+    } catch (e) {
+      developer.log('❌ 更新行程失敗：$e');
+      rethrow;
+    }
+  }
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   Future<List<ScheduleModel>> loadDaySchedules(DateTime selectedDate) async {

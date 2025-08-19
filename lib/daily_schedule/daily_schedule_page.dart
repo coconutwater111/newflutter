@@ -175,7 +175,10 @@ class _DailySchedulePageState extends State<DailySchedulePage> {
   }
 
   void _editSchedule(ScheduleModel schedule) {
-    _dialogs.showEditScheduleDialog(schedule);
+    _dialogs.showEditScheduleDialog(
+      schedule,
+      onSaved: _loadDaySchedules,
+    );
   }
 
   void _deleteSchedule(ScheduleModel schedule) {
