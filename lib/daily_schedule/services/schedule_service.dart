@@ -5,13 +5,18 @@ import '../models/schedule_model.dart';
 import '../utils/schedule_utils.dart';
 
 class ScheduleService {
-  Future<void> updateSchedule(ScheduleModel schedule) async {
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
+  /// 更新行程
+  Future<void> updateSchedule(String uid, DateTime date, ScheduleModel schedule) async {
     try {
-      // 這裡假設你有日期資訊可推算 doc 路徑，若 schedule 有日期欄位請改用 schedule.date
-      final docPath = ScheduleUtils.formatDateKey(schedule.startTime ?? DateTime.now());
+      final dateKey = ScheduleUtils.formatDateKey(date);
       await _firestore
-          .doc(docPath)
+          .collection('Tasks')
+          .doc(uid)
           .collection('task_list')
+          .doc(dateKey)
+          .collection('tasks')
           .doc(schedule.id)
           .update({
         'desc': schedule.description,
@@ -25,25 +30,26 @@ class ScheduleService {
       rethrow;
     }
   }
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  Future<List<ScheduleModel>> loadDaySchedules(DateTime selectedDate) async {
+  /// 讀取某天所有行程
+  Future<List<ScheduleModel>> loadDaySchedules(String uid, DateTime selectedDate) async {
     try {
-      final docPath = ScheduleUtils.formatDateKey(selectedDate);
-      
-      developer.log('🔍 載入日行程：$docPath');
-      
+      final dateKey = ScheduleUtils.formatDateKey(selectedDate);
+      developer.log('🔍 載入日行程：$dateKey');
       final snapshot = await _firestore
-          .doc(docPath)
+          .collection('Tasks')
+          .doc(uid)
           .collection('task_list')
-          .orderBy('startTime') // 改為按照 startTime 排序，與主頁面一致
+          .doc(dateKey)
+          .collection('tasks')
+          .orderBy('startTime')
           .get();
 
       final schedules = snapshot.docs.map((doc) {
         return ScheduleModel.fromFirestore(doc, selectedDate);
       }).toList();
 
-      // 客戶端再次排序，確保按時間順序顯示（與主頁面邏輯一致）
+      // 客戶端再次排序
       schedules.sort((a, b) {
         if (a.startTime != null && b.startTime != null) {
           return a.startTime!.compareTo(b.startTime!);
@@ -53,14 +59,31 @@ class ScheduleService {
         return a.index.compareTo(b.index);
       });
 
-      // 檢查時間重疊
       _checkForOverlaps(schedules);
 
       developer.log('✅ 載入完成，共 ${schedules.length} 筆日行程');
       return schedules;
-
     } catch (e) {
       developer.log('❌ 載入日行程失敗：$e');
+      rethrow;
+    }
+  }
+
+  /// 刪除行程
+  Future<void> deleteSchedule(String uid, DateTime date, String scheduleId) async {
+    try {
+      final dateKey = ScheduleUtils.formatDateKey(date);
+      await _firestore
+          .collection('Tasks')
+          .doc(uid)
+          .collection('task_list')
+          .doc(dateKey)
+          .collection('tasks')
+          .doc(scheduleId)
+          .delete();
+      developer.log('✅ 刪除行程成功');
+    } catch (e) {
+      developer.log('❌ 刪除行程失敗：$e');
       rethrow;
     }
   }
@@ -74,22 +97,6 @@ class ScheduleService {
           break;
         }
       }
-    }
-  }
-
-  Future<void> deleteSchedule(DateTime selectedDate, ScheduleModel schedule) async {
-    try {
-      final docPath = ScheduleUtils.formatDateKey(selectedDate);
-      await _firestore
-          .doc(docPath)
-          .collection('task_list')
-          .doc(schedule.id)
-          .delete();
-      
-      developer.log('✅ 刪除行程成功');
-    } catch (e) {
-      developer.log('❌ 刪除行程失敗：$e');
-      rethrow;
     }
   }
 }

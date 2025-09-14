@@ -84,7 +84,11 @@ class ScheduleDialogs {
                 );
 
                 final service = ScheduleService();
-                await service.updateSchedule(updated);
+                await service.updateSchedule(
+                  updated.id,
+                  updated.startTime!,
+                  updated,
+                );
 
                 if (context.mounted) {
                   Navigator.of(context).pop();

@@ -51,7 +51,8 @@ class _DailySchedulePageState extends State<DailySchedulePage> {
 
     try {
       final schedules = await _scheduleService.loadDaySchedules(
-        widget.selectedDate,
+        ScheduleUtils.formatDate(widget.selectedDate), // 傳入 String 類型的日期
+        widget.selectedDate, // 傳入 DateTime
       );
 
       setState(() {
@@ -186,7 +187,11 @@ class _DailySchedulePageState extends State<DailySchedulePage> {
       schedule,
       onConfirmed: () async {
         try {
-          await _scheduleService.deleteSchedule(widget.selectedDate, schedule);
+          await _scheduleService.deleteSchedule(
+            ScheduleUtils.formatDate(widget.selectedDate),
+            widget.selectedDate,
+            schedule.id,
+          );
           _loadDaySchedules();
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
