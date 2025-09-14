@@ -7,6 +7,7 @@ class NetworkService {
   static const int maxRetries = 3;
 
   Future<Map<String, dynamic>> sendData(Map<String, dynamic> data) async {
+    print('[sendData] data: $data');
     for (int attempt = 1; attempt <= maxRetries; attempt++) {
       try {
         final response = await http.post(

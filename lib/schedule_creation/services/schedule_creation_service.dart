@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dart:developer' as developer;
+import 'package:firebase_auth/firebase_auth.dart'; // 新增
 import '../../daily_schedule/daily_schedule_page.dart';
 import '../../daily_schedule/utils/schedule_utils.dart';
 
 class ScheduleCreationService {
-  /// 新增行程到正確的 Firestore 路徑（tasks/yyyy/MM/dd/task_list）
+  /// 新增行程到正確的 Firestore 路徑（/Tasks/{uid}/task_list/{date}/tasks）
   Future<void> addScheduleToTaskList({
     required DateTime selectedDate,
     required String name,
@@ -13,11 +14,20 @@ class ScheduleCreationService {
     required dynamic startTime,
     required dynamic endTime,
   }) async {
-    final docPath = ScheduleUtils.formatDateKey(selectedDate); // tasks/yyyy/MM/dd
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) {
+      throw Exception('無法取得使用者 UID');
+    }
+    final dateKey = ScheduleUtils.formatDateKey(selectedDate);
+
     await FirebaseFirestore.instance
-        .doc(docPath)
+        .collection('Tasks')
+        .doc(uid)
         .collection('task_list')
+        .doc(dateKey)
+        .collection('tasks')
         .add({
+      'name': name,
       'desc': desc,
       'startTime': startTime,
       'endTime': endTime,

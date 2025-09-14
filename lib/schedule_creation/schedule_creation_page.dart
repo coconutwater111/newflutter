@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'services/schedule_creation_service.dart';
-import '../widget.dart'; // 使用現有的 InputSection
+import '../input_section.dart'; // 使用現有的 InputSection
 import '../home_screen/custom_bottom_app_bar.dart';
 import '../shared/services/firebase_service.dart';
 import '../shared/services/network_service.dart';

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class InputSection extends StatefulWidget {
   final void Function(Map<String, dynamic>) onSubmit;
@@ -67,7 +68,10 @@ class _InputSectionState extends State<InputSection> {
     String formatTime(TimeOfDay t) =>
         '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}';
 
+    final uid = FirebaseAuth.instance.currentUser?.uid ?? 'unknown_user';
+
     final data = {
+      "uid": uid,
       "taskDate": widget.selectedDay.toIso8601String().split("T")[0],
       "Ts": formatTime(_ts!),
       "Te": formatTime(_te!),
@@ -75,6 +79,9 @@ class _InputSectionState extends State<InputSection> {
       "k": _kValues.map((v) => v.toInt()).toList(),
       "desc": _descControllers.map((c) => c.text.trim()).toList(),
     };
+
+    // 1. _handleSubmit
+    print('[_handleSubmit] data: $data');
 
     widget.onSubmit(data);
 

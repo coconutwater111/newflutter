@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../widgets/fatigue_chart.dart';
 
@@ -29,7 +30,7 @@ class _FatiguePageState extends State<FatiguePage> {
     );
   }
   List<double> fatigueData = List.filled(24, 0.0);
-  final String userId = 'testUser';
+  String get userId => FirebaseAuth.instance.currentUser?.uid ?? 'unknownUser';
 
   // 新增 GlobalKey
   final GlobalKey<FatigueChartState> chartKey = GlobalKey<FatigueChartState>();
@@ -39,12 +40,12 @@ class _FatiguePageState extends State<FatiguePage> {
   // 讀取疲勞度資料
   Future<void> loadFatigueData() async {
     try {
-      final query = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(userId)
-          .collection('fatigue_logs')
-          .doc(docId)
-          .get();
+    final query = await FirebaseFirestore.instance
+      .collection('users')
+      .doc(userId)
+      .collection('fatigue_logs')
+      .doc(docId)
+      .get();
 
       if (query.exists) {
         final data = query.data();
