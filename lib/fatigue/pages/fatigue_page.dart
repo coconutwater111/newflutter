@@ -22,13 +22,15 @@ class _FatiguePageState extends State<FatiguePage> {
       padding: const EdgeInsets.symmetric(horizontal: 4),
       child: ElevatedButton(
         onPressed: onPressed,
-        style: color != null
-            ? ElevatedButton.styleFrom(backgroundColor: color)
-            : null,
+        style:
+            color != null
+                ? ElevatedButton.styleFrom(backgroundColor: color)
+                : null,
         child: Text(label),
       ),
     );
   }
+
   List<double> fatigueData = List.filled(24, 0.0);
   String get userId => FirebaseAuth.instance.currentUser?.uid ?? 'unknownUser';
 
@@ -40,12 +42,13 @@ class _FatiguePageState extends State<FatiguePage> {
   // 讀取疲勞度資料
   Future<void> loadFatigueData() async {
     try {
-    final query = await FirebaseFirestore.instance
-      .collection('users')
-      .doc(userId)
-      .collection('fatigue_logs')
-      .doc(docId)
-      .get();
+      final query =
+          await FirebaseFirestore.instance
+              .collection('users')
+              .doc(userId)
+              .collection('fatigue_logs')
+              .doc(docId)
+              .get();
 
       if (query.exists) {
         final data = query.data();
@@ -72,9 +75,9 @@ class _FatiguePageState extends State<FatiguePage> {
           .collection('fatigue_logs')
           .doc(docId)
           .set({
-        'values': validFatigueData,
-        'timestamp': FieldValue.serverTimestamp(),
-      }, SetOptions(merge: true));
+            'values': validFatigueData,
+            'timestamp': FieldValue.serverTimestamp(),
+          }, SetOptions(merge: true));
     } catch (e) {
       showMessage('儲存失敗：$e');
     }
@@ -93,9 +96,9 @@ class _FatiguePageState extends State<FatiguePage> {
           .collection('fatigue_logs')
           .doc(docId)
           .set({
-        'values': List.filled(24, 0.0),
-        'timestamp': FieldValue.serverTimestamp(),
-      }, SetOptions(merge: true));
+            'values': List.filled(24, 0.0),
+            'timestamp': FieldValue.serverTimestamp(),
+          }, SetOptions(merge: true));
     } catch (e) {
       showMessage('雲端歸零失敗：$e');
     }
@@ -103,9 +106,9 @@ class _FatiguePageState extends State<FatiguePage> {
 
   // 顯示訊息
   void showMessage(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
   @override
@@ -123,7 +126,8 @@ class _FatiguePageState extends State<FatiguePage> {
 
   @override
   Widget build(BuildContext context) {
-    final isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
+    final isLandscape =
+        MediaQuery.of(context).orientation == Orientation.landscape;
     final actionButtons = [
       buildActionButton(label: '儲存', onPressed: saveFatigueData),
       buildActionButton(
@@ -137,10 +141,11 @@ class _FatiguePageState extends State<FatiguePage> {
           final result = await Navigator.push<List<double>>(
             context,
             MaterialPageRoute(
-              builder: (context) => FatigueDisplayPage(
-                intelligenceType: widget.intelligenceType,
-                initialFatigueData: List<double>.from(fatigueData),
-              ),
+              builder:
+                  (context) => FatigueDisplayPage(
+                    intelligenceType: widget.intelligenceType,
+                    initialFatigueData: List<double>.from(fatigueData),
+                  ),
             ),
           );
           if (result != null) {
@@ -160,45 +165,45 @@ class _FatiguePageState extends State<FatiguePage> {
       ),
       body: Column(
         children: [
-              Expanded(
-                child: FatigueChart(
-                  key: chartKey,
-                  onFatigueValuesChanged: updateFatigueData,
-                  initialFatigueValues: fatigueData,
-                ),
-              ),
-              const Divider(),
-              Builder(
-                builder: (context) {
-                  return Column(
-                    children: [
-                      if (isLandscape) const SizedBox(height: 32),
-                      Padding(
-                        padding: const EdgeInsets.all(12.0),
-                        child: Align(
-                          alignment: Alignment.topLeft,
-                          child: Text(
-                            '疲勞值 (24 小時)：\n${fatigueData.map((v) => v.toStringAsFixed(1)).join(', ')}',
-                            style: const TextStyle(fontSize: 14),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-                    ],
-                  );
-                },
-              ),
-              if (!isLandscape)
-                Wrap(
-                  spacing: 12,
-                  runSpacing: 10,
-                  alignment: WrapAlignment.center,
-                  children: actionButtons,
-                ),
-              const SizedBox(height: 20),
-            ],
+          Expanded(
+            child: FatigueChart(
+              key: chartKey,
+              onFatigueValuesChanged: updateFatigueData,
+              initialFatigueValues: fatigueData,
+            ),
           ),
-        );
+          const Divider(),
+          Builder(
+            builder: (context) {
+              return Column(
+                children: [
+                  if (isLandscape) const SizedBox(height: 32),
+                  Padding(
+                    padding: const EdgeInsets.all(12.0),
+                    child: Align(
+                      alignment: Alignment.topLeft,
+                      child: Text(
+                        '疲勞值 (24 小時)：\n${fatigueData.map((v) => v.toStringAsFixed(1)).join(', ')}',
+                        style: const TextStyle(fontSize: 14),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                ],
+              );
+            },
+          ),
+          if (!isLandscape)
+            Wrap(
+              spacing: 12,
+              runSpacing: 10,
+              alignment: WrapAlignment.center,
+              children: actionButtons,
+            ),
+          const SizedBox(height: 20),
+        ],
+      ),
+    );
   }
 }
 
@@ -207,7 +212,11 @@ class FatigueDisplayPage extends StatefulWidget {
   final String intelligenceType; // 接收智能類型參數
   final List<double>? initialFatigueData;
 
-  const FatigueDisplayPage({super.key, required this.intelligenceType, this.initialFatigueData});
+  const FatigueDisplayPage({
+    super.key,
+    required this.intelligenceType,
+    this.initialFatigueData,
+  });
 
   @override
   FatigueDisplayPageState createState() => FatigueDisplayPageState();
@@ -224,14 +233,15 @@ class FatigueDisplayPageState extends State<FatigueDisplayPage> {
           .collection('fatigue_logs')
           .doc(docId)
           .set({
-        'values': fatigueData,
-        'timestamp': FieldValue.serverTimestamp(),
-      }, SetOptions(merge: true));
+            'values': fatigueData,
+            'timestamp': FieldValue.serverTimestamp(),
+          }, SetOptions(merge: true));
     } catch (e) {
       // 可選：顯示錯誤訊息
       // ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('儲存失敗: $e')));
     }
   }
+
   List<double> fatigueData = List.filled(24, 0.0);
   final String userId = 'testUser';
 
@@ -239,12 +249,13 @@ class FatigueDisplayPageState extends State<FatigueDisplayPage> {
     try {
       String docId = 'fatigue_${widget.intelligenceType}'; // 根據智能類型組成文檔 ID
 
-      final doc = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(userId)
-          .collection('fatigue_logs')
-          .doc(docId)
-          .get();
+      final doc =
+          await FirebaseFirestore.instance
+              .collection('users')
+              .doc(userId)
+              .collection('fatigue_logs')
+              .doc(docId)
+              .get();
 
       if (doc.exists) {
         final List<dynamic> values = doc.data()?['values'] ?? [];
@@ -262,10 +273,11 @@ class FatigueDisplayPageState extends State<FatigueDisplayPage> {
   @override
   void initState() {
     super.initState();
-  fatigueData = widget.initialFatigueData != null
-    ? List<double>.from(widget.initialFatigueData!)
-    : List.filled(24, 0.0);
-  loadFatigueData();
+    fatigueData =
+        widget.initialFatigueData != null
+            ? List<double>.from(widget.initialFatigueData!)
+            : List.filled(24, 0.0);
+    loadFatigueData();
   }
 
   @override
@@ -289,7 +301,10 @@ class FatigueDisplayPageState extends State<FatigueDisplayPage> {
               itemBuilder: (context, index) {
                 double value = fatigueData[index];
                 return Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 6,
+                  ),
                   child: Row(
                     children: [
                       SizedBox(width: 50, child: Text('$index:00')),
